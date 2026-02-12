@@ -1,11 +1,15 @@
 import sqlite3
+import os
 
-# Connect to database (create if it doesn't exist)
-conn = sqlite3.connect('../database/tender.db')
+current_dir = os.path.dirname(__file__)
+db_path = os.path.join(current_dir, "..", "database", "tender.db")
+
+print("DB PATH:", db_path)
+
+conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 
-# Create table for tenders
-cursor.execute('''
+cursor.execute("""
 CREATE TABLE IF NOT EXISTS tenders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     tender_id TEXT,
@@ -16,8 +20,9 @@ CREATE TABLE IF NOT EXISTS tenders (
     deadline TEXT,
     pdf_path TEXT
 )
-''')
+""")
 
 conn.commit()
 conn.close()
-print("Database created successfully!")
+
+print("✅ Table 'tenders' created successfully!")
