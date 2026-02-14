@@ -1,6 +1,23 @@
-import csv
+import sqlite3
 import os
+import csv
 import requests
+from datetime import datetime
+
+def get_urgency(deadline):
+    try:
+        closing = datetime.strptime(deadline, "%d-%m-%Y")
+        days_left = (closing - datetime.now()).days
+
+        if days_left <= 3:
+            return "HIGH"
+        elif days_left <= 7:
+            return "MEDIUM"
+        else:
+            return "LOW"
+    except:
+        return "UNKNOWN"
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -8,33 +25,27 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 
-# -------------------------------
-# Chrome setup
-# -------------------------------
 chrome_options = Options()
-# chrome_options.add_argument("--headless")  # Uncomment to hide browser
 chrome_options.add_argument("--start-maximized")
 
 driver = webdriver.Chrome(options=chrome_options)
 
-# -------------------------------
-# URL & PDF folder
-# -------------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE = os.path.join(BASE_DIR, "database", "tender.db")
+
+conn = sqlite3.connect(DATABASE)
+cursor = conn.cursor()
+
 url = "https://nagpur.gov.in/past-notices/tenders/"
 pdf_folder = "tenders_pdfs"
 os.makedirs(pdf_folder, exist_ok=True)
 
-# -------------------------------
-# CSV setup
-# -------------------------------
 csv_file = "tenders_output.csv"
 with open(csv_file, "w", newline="", encoding="utf-8") as f:
     writer = csv.writer(f)
     writer.writerow(["Title", "Deadline", "PDF Filename", "PDF URL"])
 
-# -------------------------------
-# Scraping
-# -------------------------------
+
 try:
     print("Opening page...")
     driver.get(url)
@@ -86,6 +97,27 @@ try:
 
                 # Save to CSV
                 writer.writerow([title, deadline, pdf_filename, pdf_link or ""])
+                cursor.execute("SELECT id FROM tenders WHERE title = ?", (title,))
+                existing = cursor.fetchone()
+
+                if existing:
+                   continue
+                urgency = get_urgency(deadline)
+
+                cursor.execute("""
+                INSERT INTO tenders 
+                (title, department, closing_date, pdf_link, urgency_level)
+                VALUES (?, ?, ?, ?, ?)
+                """, (
+                    title,
+                    "Nagpur Municipal Corporation",
+                    deadline,
+                    pdf_link or "",
+                    urgency
+                ))
+
+
+                conn.commit()
                 print(f"Saved: {title} | Deadline: {deadline} | PDF: {pdf_filename or 'None'} | URL: {pdf_link or 'None'}")
 
     print("Finished! Check 'tenders_output.csv' and 'tenders_pdfs' folder.")
@@ -94,4 +126,5 @@ except Exception as e:
     print("Error occurred:", e)
 
 finally:
+    conn.close()
     driver.quit()
