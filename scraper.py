@@ -3,10 +3,14 @@ import os
 import csv
 import requests
 from datetime import datetime
-
+from selenium import webdriver
+from selenium.webdriver.edge.service import Service
+from selenium.webdriver.edge.options import Options
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException 
 def get_urgency(deadline):
     try:
-        closing = datetime.strptime(deadline, "%d-%m-%Y")
+        closing = datetime.strptime(deadline, "%d/%m/%Y")
         days_left = (closing - datetime.now()).days
 
         if days_left <= 3:
@@ -18,17 +22,12 @@ def get_urgency(deadline):
     except:
         return "UNKNOWN"
 
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException
-
 chrome_options = Options()
 chrome_options.add_argument("--start-maximized")
 
-driver = webdriver.Chrome(options=chrome_options)
+service = Service("msedgedriver.exe")
+driver = webdriver.Edge(service=service, options=chrome_options)
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE = os.path.join(BASE_DIR, "database", "tender.db")
@@ -50,18 +49,13 @@ try:
     print("Opening page...")
     driver.get(url)
 
-    # Wait for table to load
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.TAG_NAME, "table"))
-    )
-
-    table = driver.find_element(By.TAG_NAME, "table")
-    rows = table.find_elements(By.TAG_NAME, "tr")
+    rows = driver.find_elements(By.TAG_NAME, "tr")
 
     with open(csv_file, "a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
 
-        for row in rows[1:]:  # Skip header
+
+        for row in rows[1:]: 
             cols = row.find_elements(By.TAG_NAME, "td")
             if len(cols) >= 5:
                 title = cols[1].text.strip()
