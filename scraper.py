@@ -61,11 +61,9 @@ try:
                 title = cols[1].text.strip()
                 deadline = cols[3].text.strip()
 
-                # Skip meetings or empty rows
                 if not title or "meeting" in title.lower():
                     continue
 
-                # Get PDF link
                 pdf_link = None
                 try:
                     link_element = cols[4].find_element(By.TAG_NAME, "a")
@@ -73,7 +71,6 @@ try:
                 except NoSuchElementException:
                     pdf_link = None
 
-                # Download PDF if link exists
                 pdf_filename = ""
                 if pdf_link and ".pdf" in pdf_link.lower():
                     safe_name = "".join(c if c.isalnum() or c in " .-_()" else "_" for c in title)
@@ -88,8 +85,7 @@ try:
                     except Exception as e:
                         print(f"Error downloading PDF for {title}: {e}")
                         pdf_filename = ""
-
-                # Save to CSV
+                        
                 writer.writerow([title, deadline, pdf_filename, pdf_link or ""])
                 cursor.execute("SELECT id FROM tenders WHERE title = ?", (title,))
                 existing = cursor.fetchone()
