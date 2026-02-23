@@ -1,6 +1,6 @@
 import sqlite3
 import os
-from services.nlp import generate_summary, extract_keywords, calculate_relevance
+from backend.nlp import generate_summary, extract_keywords, calculate_relevance
 
 
 def save_tender(title, text, user_interest):

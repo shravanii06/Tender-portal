@@ -1,10 +1,22 @@
+import { useState, useEffect } from "react";
 import { Navbar } from "../components/Navbar";
 import { Hero } from "../components/Hero";
 import { TenderCard } from "../components/TenderCard";
 import { AnimatedBackground } from "../components/AnimatedBackground";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 
-const mockTenders = [
+type Tender = {
+  title: string;
+  matchScore: number;
+  insight: string;
+  deadline: string;
+  department: string;
+  value: string;
+  apply_url?: string;
+
+};
+
+const Tenders: Tender[] = [
   {
     title: "Cloud Infrastructure Modernization for Defense Operations",
     matchScore: 95,
@@ -62,6 +74,17 @@ const mockTenders = [
 ];
 
 export function Home() {
+  const [tenders, setTenders] = useState<Tender[]>([]); 
+  useEffect(() => {
+  fetch("http://127.0.0.1:5000/api/tenders")
+    .then((res) => res.json())
+    .then((data) => {
+      console.log("DATA FROM BACKEND:", data);
+      setTenders(data);
+    })
+    .catch((err) => console.error("FETCH ERROR:", err));
+}, []);
+
   return (
     <div className="min-h-screen bg-white relative">
       {/* Animated Background Layer */}
@@ -93,21 +116,22 @@ export function Home() {
 
             {/* Tender Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockTenders.map((tender, index) => (
+              {tenders.map((tender, index) => (
                 <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 40 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{
-                    duration: 0.5,
-                    ease: "easeOut",
-                    delay: index * 0.1,
-                  }}
-                >
-                  <TenderCard {...tender} />
-                </motion.div>
+                 key={index}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{
+                duration: 0.5,
+                ease: "easeOut",
+                delay: index * 0.1,
+                }}
+  >
+               <TenderCard {...tender} />
+               </motion.div>
               ))}
+
             </div>
 
             {/* Load More */}
@@ -127,6 +151,15 @@ export function Home() {
                   color: "white",
                 }}
               >
+                <div>
+                  {tenders.map((tender , index) => (
+                    <div key={index}>
+                      <h2>{tender.title} </h2>
+                      <p>{tender.department}</p>
+                    </div>
+                   )
+                  )}
+                </div>
                 Load More Tenders
               </motion.button>
             </motion.div>

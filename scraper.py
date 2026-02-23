@@ -30,7 +30,7 @@ driver = webdriver.Edge(service=service, options=chrome_options)
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE = os.path.join(BASE_DIR, "database", "tender.db")
+DATABASE = os.path.join(BASE_DIR, "backend", "database", "tender.db")
 
 conn = sqlite3.connect(DATABASE)
 cursor = conn.cursor()
@@ -96,14 +96,15 @@ try:
 
                 cursor.execute("""
                 INSERT INTO tenders 
-                (title, department, closing_date, pdf_link, urgency_level)
-                VALUES (?, ?, ?, ?, ?)
+                (title, department, deadline, pdf_link, urgency_level, apply_url)
+                VALUES (?, ?, ?, ?, ?, ?)
                 """, (
                     title,
                     "Nagpur Municipal Corporation",
                     deadline,
                     pdf_link or "",
-                    urgency
+                    urgency,
+                    pdf_link or ""
                 ))
 
 
